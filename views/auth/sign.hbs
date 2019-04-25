@@ -1,6 +1,6 @@
 <h2>{{title}}</h2>
 
-<form action="{{action}}" method="POST">
+<form action="{{action}}" method="POST" {{#if sign}} enctype="multipart/form-data" {{/if}}>
   <p>
     <label>Email</label>
     <input type="email" name="email" />
@@ -9,6 +9,12 @@
     <label>Password</label>
     <input type="password" name="password" />
   </p>
+  {{#if sign}}
+  <p>
+    <label>Photo</label>
+    <input type="file" name="photoURL" />
+  </p>
+  {{/if}}
   <p>
     <input type="submit" value={{title}}>
   </p>

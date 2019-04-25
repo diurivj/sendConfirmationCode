@@ -2,9 +2,10 @@ const router = require('express').Router()
 const passport = require('../handlers/passport')
 const User = require('../models/User')
 const { sendConfimationCode } = require('../handlers/nodemailer')
+const uploadCloud = require('../handlers/cloudinary')
 
 router.get('/signup', (req, res, next) => {
-  const config = { title: 'Sign up', action: '/signup' }
+  const config = { title: 'Sign up', action: '/signup', sign: true }
   res.render('auth/sign', config)
 })
 
@@ -13,20 +14,18 @@ router.get('/login', (req, res, next) => {
   res.render('auth/sign', config)
 })
 
-router.post('/signup', (req, res, next) => {
-  User.register({ ...req.body }, req.body.password)
+router.post('/signup', uploadCloud.single('photoURL'), (req, res, next) => {
+  User.register(
+    { ...req.body, photoURL: req.file.secure_url },
+    req.body.password
+  )
     .then(user => {
-      const confirmationCode = `${user._id}${user.email}`
+      confirmationCode = `${user._id}${user.email}`
       User.findByIdAndUpdate(user._id, { confirmationCode }, { new: true })
-        .then(updatedUser => {
+        .then(({ email, confirmationCode }) => {
           sendConfimationCode(
-            updatedUser.email,
-            `
-            <p> Please click on the link </p>
-            <a href="http://localhost:3000/activate/${
-              updatedUser.confirmationCode
-            }">CLICK HERE</a>
-          `
+            email,
+            `<a href="http://localhost:3000/activate/${confirmationCode}"> Click me </a>`
           )
             .then(() => res.send('Correo enviado'))
             .catch(err => next(err))
@@ -41,7 +40,9 @@ router.post('/login', passport.authenticate('local'), (req, res, next) => {
 })
 
 router.get('/profile', isActive, (req, res, next) => {
-  res.send(req.user)
+  res.send(`
+    <img src="${req.user.photoURL}" />
+  `)
 })
 
 router.get('/activate/:confirmationCode', (req, res, next) => {

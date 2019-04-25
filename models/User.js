@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema(
     confirmationCode: {
       type: String,
       unique: true
-    }
+    },
+    photoURL: String
   },
   {
     timestamps: true,
